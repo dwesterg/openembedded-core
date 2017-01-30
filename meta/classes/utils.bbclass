@@ -264,10 +264,14 @@ create_cmdline_wrapper () {
 
 	mv $cmd $cmd.real
 	cmdname=`basename $cmd`
+	dirname=`dirname $cmd`
+	relpath=`python3 -c "import os; print(os.path.relpath('${D}${base_prefix}', '$dirname'))"`
+	cmdoptions=`echo $@ | sed -e "s:${base_prefix}:\\$realdir/$relpath:g"`
 	cat <<END >$cmd
 #!/bin/bash
 realpath=\`readlink -fn \$0\`
-exec -a \`dirname \$realpath\`/$cmdname \`dirname \$realpath\`/$cmdname.real $@ "\$@"
+realdir=\`dirname \$realpath\`
+exec -a \`dirname \$realpath\`/$cmdname \`dirname \$realpath\`/$cmdname.real $cmdoptions "\$@"
 END
 	chmod +x $cmd
 }
@@ -287,10 +291,14 @@ create_wrapper () {
 
 	mv $cmd $cmd.real
 	cmdname=`basename $cmd`
+	dirname=`dirname $cmd`
+	relpath=`python3 -c "import os; print(os.path.relpath('${D}${base_prefix}', '$dirname'))"`
+	exportstring=`echo $@ | sed -e "s:${base_prefix}:\\$realdir/$relpath:g"`
 	cat <<END >$cmd
 #!/bin/bash
 realpath=\`readlink -fn \$0\`
-export $@
+realdir=\`dirname \$realpath\`
+export $exportstring
 exec -a \`dirname \$realpath\`/$cmdname \`dirname \$realpath\`/$cmdname.real "\$@"
 END
 	chmod +x $cmd
